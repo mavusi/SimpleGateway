@@ -11,6 +11,7 @@ var gatewayApp = gatewayBuilder.Build();
 if (gatewayApp.Environment.IsDevelopment())
 {
     gatewayApp.MapOpenApi();
+    
 }
 
 if (!gatewayApp.Environment.IsEnvironment("Docker"))
