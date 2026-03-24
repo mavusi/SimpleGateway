@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Net.Http;
 
 var gatewayServices = new ConcurrentDictionary<string, ServiceConfig>();
 var gatewayEndpoints = new ConcurrentDictionary<string, EndpointConfig>();
@@ -19,13 +20,36 @@ if (!gatewayApp.Environment.IsEnvironment("Docker"))
     gatewayApp.UseHttpsRedirection();
 }
 
-static async Task<object> EchoRequest(Microsoft.AspNetCore.Http.HttpRequest req)
+async Task<object> EchoRequest(Microsoft.AspNetCore.Http.HttpRequest req)
 {
-    using var reader = new System.IO.StreamReader(req.Body);
-    var body = await reader.ReadToEndAsync();
-    var headers = req.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
-    var cookies = req.Cookies.ToDictionary(c => c.Key, c => c.Value);
-    return new { method = req.Method, path = req.Path.ToString(), query = req.Query.ToDictionary(q => q.Key, q => q.Value.ToString()), headers, cookies, body };
+    var endpoint = gatewayEndpoints.Values.FirstOrDefault(e => e.Path == req.Path.ToString() && e.Method == req.Method);
+    if (endpoint != null && gatewayServices.TryGetValue(endpoint.ServiceId, out var service))
+    {
+        var url = service.Url.TrimEnd('/') + req.Path + req.QueryString;
+        using var client = new HttpClient();
+        var requestMessage = new HttpRequestMessage(new HttpMethod(req.Method), url);
+        foreach (var h in req.Headers.Where(h => !new[] { "Host", "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding", "Upgrade" }.Contains(h.Key)))
+        {
+            requestMessage.Headers.TryAddWithoutValidation(h.Key, h.Value.ToString());
+        }
+        if (req.ContentLength > 0)
+        {
+            req.Body.Position = 0;
+            requestMessage.Content = new StreamContent(req.Body);
+        }
+        var response = await client.SendAsync(requestMessage);
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var responseHeaders = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
+        return new { statusCode = (int)response.StatusCode, headers = responseHeaders, body = responseBody };
+    }
+    else
+    {
+        using var reader = new System.IO.StreamReader(req.Body);
+        var body = await reader.ReadToEndAsync();
+        var headers = req.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
+        var cookies = req.Cookies.ToDictionary(c => c.Key, c => c.Value);
+        return new { method = req.Method, path = req.Path.ToString(), query = req.Query.ToDictionary(q => q.Key, q => q.Value.ToString()), headers, cookies, body, message = "No configured endpoint found" };
+    }
 }
 
 string allPath = "{**catchAll}";
