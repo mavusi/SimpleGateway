@@ -120,14 +120,6 @@ adminApp.MapPut("/admin/services/{id}", (string id, ServiceConfig update) =>
     update.Id = id;
     gatewayServices[id] = update;
 
-    var oldval = gatewayServices[id].Url;
-    var newval = update.Url;
-
-    foreach (var endpoint in gatewayEndpoints.Where(x => x.Value.ServiceId == update.Id))
-    { 
-        endpoint.Value.Path = endpoint.Value.Path.Replace(oldval, newval);
-    }
-
     return Results.Ok(update);
 });
 adminApp.MapDelete("/admin/services/{id}", (string id) => gatewayServices.TryRemove(id, out var _ ) ? Results.NoContent() : Results.NotFound());
@@ -140,10 +132,6 @@ adminApp.MapPost("/admin/endpoints", (EndpointConfig endpoint) =>
     if (string.IsNullOrWhiteSpace(endpoint.ServiceId)) return Results.BadRequest("ServiceId is required");
     if (!gatewayServices.ContainsKey(endpoint.ServiceId)) return Results.BadRequest("Service does not exist");
 
-    var service = gatewayServices[endpoint.ServiceId];
-
-    endpoint.Path = service.Url.TrimEnd('/') + endpoint.Path;
-
     if (!gatewayEndpoints.TryAdd(endpoint.Id, endpoint)) return Results.Conflict($"Endpoint {endpoint.Id} already exists");
     return Results.Created($"/admin/endpoints/{endpoint.Id}", endpoint);
 });
@@ -154,7 +142,6 @@ adminApp.MapPut("/admin/endpoints/{id}", (string id, EndpointConfig update) =>
     var service = gatewayServices[id];
 
     update.Id = id;
-    update.Path =  service.Url.TrimEnd('/') + update.Path;
     gatewayEndpoints[id] = update;
     return Results.Ok(update);
 });
