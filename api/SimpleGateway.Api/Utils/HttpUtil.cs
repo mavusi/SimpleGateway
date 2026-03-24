@@ -71,6 +71,7 @@ namespace SimpleGateway.Api.Utils
 
         public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
         {
+            _logger.LogInformation(JsonSerializer.Serialize(request));
             return await _httpClient.SendAsync(request);
         }
 
