@@ -41,18 +41,21 @@ async Task<object> ProcessRequest(Microsoft.AspNetCore.Http.HttpRequest req, Htt
         var url = service.Url.TrimEnd('/') + req.Path + req.QueryString;
         logger.LogInformation("Forwarding to {Url}", url);
         var requestMessage = new HttpRequestMessage(new HttpMethod(req.Method), url);
-        logger.LogInformation(JsonSerializer.Serialize(requestMessage));
+        logger.LogInformation("line 44");
         foreach (var h in req.Headers.Where(h => !new[] { "Host", "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding", "Upgrade" }.Contains(h.Key)))
         {
             requestMessage.Headers.TryAddWithoutValidation(h.Key, h.Value.ToString());
         }
+        logger.LogInformation("added headers");
         if (req.ContentLength > 0)
         {
             req.Body.Position = 0;
             requestMessage.Content = new StreamContent(req.Body);
         }
+        logger.LogInformation("added body");
         var response = await httpUtil.SendAsync(requestMessage);
         var responseBody = await response.Content.ReadAsStringAsync();
+        logger.LogInformation(responseBody);
         var responseHeaders = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
         return new { statusCode = (int)response.StatusCode, headers = responseHeaders, body = responseBody };
     }
