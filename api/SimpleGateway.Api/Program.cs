@@ -1,4 +1,6 @@
 using SimpleGateway.Api.Utils;
+using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
@@ -13,6 +15,8 @@ gatewayBuilder.Services.AddOpenApi();
 gatewayBuilder.Services.AddSwaggerGen();
 gatewayBuilder.Services.AddHttpClient();
 gatewayBuilder.Services.AddSingleton<HttpUtil>();
+gatewayBuilder.Services.AddSingleton(new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+gatewayBuilder.Logging.AddConsole();
 var gatewayApp = gatewayBuilder.Build();
 
 gatewayApp.MapOpenApi();
@@ -25,12 +29,17 @@ if (!gatewayApp.Environment.IsEnvironment("Docker"))
     gatewayApp.UseHttpsRedirection();
 }
 
-async Task<object> ProcessRequest(Microsoft.AspNetCore.Http.HttpRequest req, HttpUtil httpUtil)
+async Task<object> ProcessRequest(Microsoft.AspNetCore.Http.HttpRequest req, HttpUtil httpUtil, ILogger<Program> logger, JsonSerializerOptions jsonOptions)
 {
+    logger.LogInformation("Processing request {Method} {Path}", req.Method, req.Path);
     var endpoint = gatewayEndpoints.Values.FirstOrDefault(e => e.Path == req.Path.ToString() && e.Method == req.Method);
+    
+    logger.LogInformation(endpoint.Path);
+
     if (endpoint != null && gatewayServices.TryGetValue(endpoint.ServiceId, out var service))
     {
         var url = service.Url.TrimEnd('/') + req.Path + req.QueryString;
+        logger.LogInformation("Forwarding to {Url}", url);
         var requestMessage = new HttpRequestMessage(new HttpMethod(req.Method), url);
         foreach (var h in req.Headers.Where(h => !new[] { "Host", "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding", "Upgrade" }.Contains(h.Key)))
         {
@@ -52,7 +61,21 @@ async Task<object> ProcessRequest(Microsoft.AspNetCore.Http.HttpRequest req, Htt
         var body = await reader.ReadToEndAsync();
         var headers = req.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
         var cookies = req.Cookies.ToDictionary(c => c.Key, c => c.Value);
-        return new { method = req.Method, path = req.Path.ToString(), query = req.Query.ToDictionary(q => q.Key, q => q.Value.ToString()), headers, cookies, body, message = "No configured endpoint found" };
+
+        object parsedBody = null;
+        if (!string.IsNullOrWhiteSpace(body))
+        {
+            try
+            {
+                parsedBody = JsonSerializer.Deserialize<object>(body, jsonOptions);
+            }
+            catch
+            {
+                parsedBody = body;
+            }
+        }
+
+        return new { method = req.Method, path = req.Path.ToString(), query = req.Query.ToDictionary(q => q.Key, q => q.Value.ToString()), headers, cookies, body, parsedBody, message = "No configured endpoint found" };
     }
 }
 
@@ -70,6 +93,7 @@ var adminBuilder = WebApplication.CreateBuilder(args);
 adminBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8001));
 adminBuilder.Services.AddOpenApi();
 adminBuilder.Services.AddSwaggerGen();
+adminBuilder.Logging.AddConsole();
 var adminApp = adminBuilder.Build();
 
 adminApp.MapOpenApi();
