@@ -6,9 +6,13 @@ var gatewayEndpoints = new ConcurrentDictionary<string, EndpointConfig>();
 var gatewayBuilder = WebApplication.CreateBuilder(args);
 gatewayBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8000));
 gatewayBuilder.Services.AddOpenApi();
+gatewayBuilder.Services.AddSwaggerGen();
 var gatewayApp = gatewayBuilder.Build();
 
 gatewayApp.MapOpenApi();
+
+gatewayApp.UseSwagger();
+gatewayApp.UseSwaggerUI();
 
 if (!gatewayApp.Environment.IsEnvironment("Docker"))
 {
@@ -37,9 +41,13 @@ gatewayApp.MapMethods(allPath, new[] { "HEAD" }, EchoRequest).WithName("GatewayH
 var adminBuilder = WebApplication.CreateBuilder(args);
 adminBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8001));
 adminBuilder.Services.AddOpenApi();
+adminBuilder.Services.AddSwaggerGen();
 var adminApp = adminBuilder.Build();
 
 adminApp.MapOpenApi();
+
+adminApp.UseSwagger();
+adminApp.UseSwaggerUI();
 
 if (!adminApp.Environment.IsEnvironment("Docker"))
 {
