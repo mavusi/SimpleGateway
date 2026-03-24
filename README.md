@@ -16,3 +16,9 @@ API endpoints:
 - Gateway: `http://localhost:8000` (all paths)
 - Admin: `http://localhost:8001/admin/...`
 
+API docs:
+- Gateway OpenAPI JSON: `http://localhost:8000/openapi/v1.json`
+- Admin OpenAPI JSON: `http://localhost:8001/openapi/v1.json`
+
+Note: interactive Swagger UI is not included by default in `Microsoft.AspNetCore.OpenApi`. To add UI, install `Swashbuckle.AspNetCore` and configure `app.UseSwagger()` / `app.UseSwaggerUI()`.
+

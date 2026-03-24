@@ -8,11 +8,7 @@ gatewayBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8000));
 gatewayBuilder.Services.AddOpenApi();
 var gatewayApp = gatewayBuilder.Build();
 
-if (gatewayApp.Environment.IsDevelopment())
-{
-    gatewayApp.MapOpenApi();
-    
-}
+gatewayApp.MapOpenApi();
 
 if (!gatewayApp.Environment.IsEnvironment("Docker"))
 {
@@ -43,10 +39,7 @@ adminBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8001));
 adminBuilder.Services.AddOpenApi();
 var adminApp = adminBuilder.Build();
 
-if (adminApp.Environment.IsDevelopment())
-{
-    adminApp.MapOpenApi();
-}
+adminApp.MapOpenApi();
 
 if (!adminApp.Environment.IsEnvironment("Docker"))
 {
