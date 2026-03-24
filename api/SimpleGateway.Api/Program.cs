@@ -1,172 +1,106 @@
-using System.Linq;
+using System.Collections.Concurrent;
 
-var builder = WebApplication.CreateBuilder(args);
+var gatewayServices = new ConcurrentDictionary<string, ServiceConfig>();
+var gatewayEndpoints = new ConcurrentDictionary<string, EndpointConfig>();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+var gatewayBuilder = WebApplication.CreateBuilder(args);
+gatewayBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8000));
+gatewayBuilder.Services.AddOpenApi();
+var gatewayApp = gatewayBuilder.Build();
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (gatewayApp.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    gatewayApp.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+if (!gatewayApp.Environment.IsEnvironment("Docker"))
+{
+    gatewayApp.UseHttpsRedirection();
+}
 
-
-app.MapGet("{*path}", async (Microsoft.AspNetCore.Http.HttpRequest req) =>
+static async Task<object> EchoRequest(Microsoft.AspNetCore.Http.HttpRequest req)
 {
     using var reader = new System.IO.StreamReader(req.Body);
     var body = await reader.ReadToEndAsync();
+    var headers = req.Headers.ToDictionary(h => h.Key, h => h.Value.ToString());
+    var cookies = req.Cookies.ToDictionary(c => c.Key, c => c.Value);
+    return new { method = req.Method, path = req.Path.ToString(), query = req.Query.ToDictionary(q => q.Key, q => q.Value.ToString()), headers, cookies, body };
+}
 
-    var headers = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var h in req.Headers)
-    {
-        headers[h.Key] = h.Value.ToString();
-    }
+string allPath = "{**catchAll}";
 
-    var cookies = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var c in req.Cookies)
-    {
-        cookies[c.Key] = c.Value;
-    }
+gatewayApp.MapGet(allPath, EchoRequest).WithName("GatewayGet");
+gatewayApp.MapPost(allPath, EchoRequest).WithName("GatewayPost");
+gatewayApp.MapPut(allPath, EchoRequest).WithName("GatewayPut");
+gatewayApp.MapDelete(allPath, EchoRequest).WithName("GatewayDelete");
+gatewayApp.MapMethods(allPath, new[] { "PATCH" }, EchoRequest).WithName("GatewayPatch");
+gatewayApp.MapMethods(allPath, new[] { "OPTIONS" }, EchoRequest).WithName("GatewayOptions");
+gatewayApp.MapMethods(allPath, new[] { "HEAD" }, EchoRequest).WithName("GatewayHead");
 
-    return new { method = "GET", path = req.Path.ToString(), headers, cookies, body };
-})
-.WithName("Get");
+var adminBuilder = WebApplication.CreateBuilder(args);
+adminBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8001));
+adminBuilder.Services.AddOpenApi();
+var adminApp = adminBuilder.Build();
 
-app.MapPost("{*path}", async (Microsoft.AspNetCore.Http.HttpRequest req) =>
+if (adminApp.Environment.IsDevelopment())
 {
-    using var reader = new System.IO.StreamReader(req.Body);
-    var body = await reader.ReadToEndAsync();
+    adminApp.MapOpenApi();
+}
 
-    var headers = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var h in req.Headers)
-    {
-        headers[h.Key] = h.Value.ToString();
-    }
-
-    var cookies = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var c in req.Cookies)
-    {
-        cookies[c.Key] = c.Value;
-    }
-
-    return new { method = "POST", path = req.Path.ToString(), headers, cookies, body };
-})
-.WithName("Post");
-
-app.MapPut("{*path}", async (Microsoft.AspNetCore.Http.HttpRequest req) =>
+if (!adminApp.Environment.IsEnvironment("Docker"))
 {
-    using var reader = new System.IO.StreamReader(req.Body);
-    var body = await reader.ReadToEndAsync();
+    adminApp.UseHttpsRedirection();
+}
 
-    var headers = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var h in req.Headers)
-    {
-        headers[h.Key] = h.Value.ToString();
-    }
-
-    var cookies = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var c in req.Cookies)
-    {
-        cookies[c.Key] = c.Value;
-    }
-
-    return new { method = "PUT", path = req.Path.ToString(), headers, cookies, body };
-})
-.WithName("Put");
-
-app.MapDelete("{*path}", async (Microsoft.AspNetCore.Http.HttpRequest req) =>
+adminApp.MapGet("/admin/services", () => Results.Ok(gatewayServices.Values));
+adminApp.MapGet("/admin/services/{id}", (string id) => gatewayServices.TryGetValue(id, out var s) ? Results.Ok(s) : Results.NotFound());
+adminApp.MapPost("/admin/services", (ServiceConfig service) =>
 {
-    using var reader = new System.IO.StreamReader(req.Body);
-    var body = await reader.ReadToEndAsync();
-
-    var headers = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var h in req.Headers)
-    {
-        headers[h.Key] = h.Value.ToString();
-    }
-
-    var cookies = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var c in req.Cookies)
-    {
-        cookies[c.Key] = c.Value;
-    }
-
-    return new { method = "DELETE", path = req.Path.ToString(), headers, cookies, body };
-})
-.WithName("Delete");
-
-app.MapMethods("{*path}", new[] { "PATCH" }, async (Microsoft.AspNetCore.Http.HttpRequest req) =>
+    if (string.IsNullOrWhiteSpace(service.Id)) return Results.BadRequest("Id is required");
+    if (!gatewayServices.TryAdd(service.Id, service)) return Results.Conflict($"Service {service.Id} already exists");
+    return Results.Created($"/admin/services/{service.Id}", service);
+});
+adminApp.MapPut("/admin/services/{id}", (string id, ServiceConfig update) =>
 {
-    using var reader = new System.IO.StreamReader(req.Body);
-    var body = await reader.ReadToEndAsync();
+    if (!gatewayServices.ContainsKey(id)) return Results.NotFound();
+    update.Id = id;
+    gatewayServices[id] = update;
+    return Results.Ok(update);
+});
+adminApp.MapDelete("/admin/services/{id}", (string id) => gatewayServices.TryRemove(id, out var _ ) ? Results.NoContent() : Results.NotFound());
 
-    var headers = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var h in req.Headers)
-    {
-        headers[h.Key] = h.Value.ToString();
-    }
-
-    var cookies = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var c in req.Cookies)
-    {
-        cookies[c.Key] = c.Value;
-    }
-
-    return new { method = "PATCH", path = req.Path.ToString(), headers, cookies, body };
-})
-.WithName("Patch");
-
-app.MapMethods("{*path}", new[] { "OPTIONS" }, async (Microsoft.AspNetCore.Http.HttpRequest req) =>
+adminApp.MapGet("/admin/endpoints", () => Results.Ok(gatewayEndpoints.Values));
+adminApp.MapGet("/admin/endpoints/{id}", (string id) => gatewayEndpoints.TryGetValue(id, out var e) ? Results.Ok(e) : Results.NotFound());
+adminApp.MapPost("/admin/endpoints", (EndpointConfig endpoint) =>
 {
-    using var reader = new System.IO.StreamReader(req.Body);
-    var body = await reader.ReadToEndAsync();
-
-    var headers = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var h in req.Headers)
-    {
-        headers[h.Key] = h.Value.ToString();
-    }
-
-    var cookies = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var c in req.Cookies)
-    {
-        cookies[c.Key] = c.Value;
-    }
-
-    return new { method = "OPTIONS", path = req.Path.ToString(), headers, cookies, body };
-})
-.WithName("Options");
-
-app.MapMethods("{*path}", new[] { "HEAD" }, async (Microsoft.AspNetCore.Http.HttpRequest req) =>
+    if (string.IsNullOrWhiteSpace(endpoint.Id)) return Results.BadRequest("Id is required");
+    if (string.IsNullOrWhiteSpace(endpoint.ServiceId)) return Results.BadRequest("ServiceId is required");
+    if (!gatewayServices.ContainsKey(endpoint.ServiceId)) return Results.BadRequest("Service does not exist");
+    if (!gatewayEndpoints.TryAdd(endpoint.Id, endpoint)) return Results.Conflict($"Endpoint {endpoint.Id} already exists");
+    return Results.Created($"/admin/endpoints/{endpoint.Id}", endpoint);
+});
+adminApp.MapPut("/admin/endpoints/{id}", (string id, EndpointConfig update) =>
 {
-    using var reader = new System.IO.StreamReader(req.Body);
-    var body = await reader.ReadToEndAsync();
+    if (!gatewayEndpoints.ContainsKey(id)) return Results.NotFound();
+    update.Id = id;
+    gatewayEndpoints[id] = update;
+    return Results.Ok(update);
+});
+adminApp.MapDelete("/admin/endpoints/{id}", (string id) => gatewayEndpoints.TryRemove(id, out var _) ? Results.NoContent() : Results.NotFound());
 
-    var headers = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var h in req.Headers)
-    {
-        headers[h.Key] = h.Value.ToString();
-    }
+await Task.WhenAll(gatewayApp.RunAsync(), adminApp.RunAsync());
 
-    var cookies = new System.Collections.Generic.Dictionary<string, string>();
-    foreach (var c in req.Cookies)
-    {
-        cookies[c.Key] = c.Value;
-    }
-
-    return new { method = "HEAD", path = req.Path.ToString(), headers, cookies, body };
-})
-.WithName("Head");
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+public class ServiceConfig
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
+}
+
+public class EndpointConfig
+{
+    public string Id { get; set; } = string.Empty;
+    public string ServiceId { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public string Method { get; set; } = string.Empty;
 }
