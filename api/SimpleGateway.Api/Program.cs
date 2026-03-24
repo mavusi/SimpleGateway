@@ -34,13 +34,14 @@ async Task<object> ProcessRequest(Microsoft.AspNetCore.Http.HttpRequest req, Htt
     logger.LogInformation("Processing request {Method} {Path}", req.Method, req.Path);
     var endpoint = gatewayEndpoints.Values.FirstOrDefault(e => e.Path == req.Path.ToString() && e.Method == req.Method);
     
-    //logger.LogInformation(endpoint.Path);
+    logger.LogInformation(JsonSerializer.Serialize(req));
 
     if (endpoint != null && gatewayServices.TryGetValue(endpoint.ServiceId, out var service))
     {
         var url = service.Url.TrimEnd('/') + req.Path + req.QueryString;
         logger.LogInformation("Forwarding to {Url}", url);
         var requestMessage = new HttpRequestMessage(new HttpMethod(req.Method), url);
+        logger.LogInformation(JsonSerializer.Serialize(requestMessage));
         foreach (var h in req.Headers.Where(h => !new[] { "Host", "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding", "Upgrade" }.Contains(h.Key)))
         {
             requestMessage.Headers.TryAddWithoutValidation(h.Key, h.Value.ToString());
