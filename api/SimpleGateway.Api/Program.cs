@@ -34,7 +34,7 @@ async Task<object> ProcessRequest(Microsoft.AspNetCore.Http.HttpRequest req, Htt
     logger.LogInformation("Processing request {Method} {Path}", req.Method, req.Path);
     var endpoint = gatewayEndpoints.Values.FirstOrDefault(e => e.Path == req.Path.ToString() && e.Method == req.Method);
     
-    logger.LogInformation(JsonSerializer.Serialize(req));
+    //logger.LogInformation(JsonSerializer.Serialize(req));
 
     if (endpoint != null && gatewayServices.TryGetValue(endpoint.ServiceId, out var service))
     {
