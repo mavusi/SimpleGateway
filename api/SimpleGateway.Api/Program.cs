@@ -1,4 +1,7 @@
+using SimpleGateway.Api.Utils;
 using System.Collections.Concurrent;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
 
 var gatewayServices = new ConcurrentDictionary<string, ServiceConfig>();
@@ -8,6 +11,8 @@ var gatewayBuilder = WebApplication.CreateBuilder(args);
 gatewayBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8000));
 gatewayBuilder.Services.AddOpenApi();
 gatewayBuilder.Services.AddSwaggerGen();
+gatewayBuilder.Services.AddHttpClient();
+gatewayBuilder.Services.AddSingleton<HttpUtil>();
 var gatewayApp = gatewayBuilder.Build();
 
 gatewayApp.MapOpenApi();
@@ -20,13 +25,12 @@ if (!gatewayApp.Environment.IsEnvironment("Docker"))
     gatewayApp.UseHttpsRedirection();
 }
 
-async Task<object> EchoRequest(Microsoft.AspNetCore.Http.HttpRequest req)
+async Task<object> ProcessRequest(Microsoft.AspNetCore.Http.HttpRequest req, HttpUtil httpUtil)
 {
     var endpoint = gatewayEndpoints.Values.FirstOrDefault(e => e.Path == req.Path.ToString() && e.Method == req.Method);
     if (endpoint != null && gatewayServices.TryGetValue(endpoint.ServiceId, out var service))
     {
         var url = service.Url.TrimEnd('/') + req.Path + req.QueryString;
-        using var client = new HttpClient();
         var requestMessage = new HttpRequestMessage(new HttpMethod(req.Method), url);
         foreach (var h in req.Headers.Where(h => !new[] { "Host", "Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding", "Upgrade" }.Contains(h.Key)))
         {
@@ -37,7 +41,7 @@ async Task<object> EchoRequest(Microsoft.AspNetCore.Http.HttpRequest req)
             req.Body.Position = 0;
             requestMessage.Content = new StreamContent(req.Body);
         }
-        var response = await client.SendAsync(requestMessage);
+        var response = await httpUtil.SendAsync(requestMessage);
         var responseBody = await response.Content.ReadAsStringAsync();
         var responseHeaders = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
         return new { statusCode = (int)response.StatusCode, headers = responseHeaders, body = responseBody };
@@ -54,13 +58,13 @@ async Task<object> EchoRequest(Microsoft.AspNetCore.Http.HttpRequest req)
 
 string allPath = "{**catchAll}";
 
-gatewayApp.MapGet(allPath, EchoRequest).WithName("GatewayGet");
-gatewayApp.MapPost(allPath, EchoRequest).WithName("GatewayPost");
-gatewayApp.MapPut(allPath, EchoRequest).WithName("GatewayPut");
-gatewayApp.MapDelete(allPath, EchoRequest).WithName("GatewayDelete");
-gatewayApp.MapMethods(allPath, new[] { "PATCH" }, EchoRequest).WithName("GatewayPatch");
-gatewayApp.MapMethods(allPath, new[] { "OPTIONS" }, EchoRequest).WithName("GatewayOptions");
-gatewayApp.MapMethods(allPath, new[] { "HEAD" }, EchoRequest).WithName("GatewayHead");
+gatewayApp.MapGet(allPath, ProcessRequest).WithName("GatewayGet");
+gatewayApp.MapPost(allPath, ProcessRequest).WithName("GatewayPost");
+gatewayApp.MapPut(allPath, ProcessRequest).WithName("GatewayPut");
+gatewayApp.MapDelete(allPath, ProcessRequest).WithName("GatewayDelete");
+gatewayApp.MapMethods(allPath, new[] { "PATCH" }, ProcessRequest).WithName("GatewayPatch");
+gatewayApp.MapMethods(allPath, new[] { "OPTIONS" }, ProcessRequest).WithName("GatewayOptions");
+gatewayApp.MapMethods(allPath, new[] { "HEAD" }, ProcessRequest).WithName("GatewayHead");
 
 var adminBuilder = WebApplication.CreateBuilder(args);
 adminBuilder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8001));
@@ -91,6 +95,15 @@ adminApp.MapPut("/admin/services/{id}", (string id, ServiceConfig update) =>
     if (!gatewayServices.ContainsKey(id)) return Results.NotFound();
     update.Id = id;
     gatewayServices[id] = update;
+
+    var oldval = gatewayServices[id].Url;
+    var newval = update.Url;
+
+    foreach (var endpoint in gatewayEndpoints.Where(x => x.Value.ServiceId == update.Id))
+    { 
+        endpoint.Value.Path = endpoint.Value.Path.Replace(oldval, newval);
+    }
+
     return Results.Ok(update);
 });
 adminApp.MapDelete("/admin/services/{id}", (string id) => gatewayServices.TryRemove(id, out var _ ) ? Results.NoContent() : Results.NotFound());
@@ -102,13 +115,22 @@ adminApp.MapPost("/admin/endpoints", (EndpointConfig endpoint) =>
     if (string.IsNullOrWhiteSpace(endpoint.Id)) return Results.BadRequest("Id is required");
     if (string.IsNullOrWhiteSpace(endpoint.ServiceId)) return Results.BadRequest("ServiceId is required");
     if (!gatewayServices.ContainsKey(endpoint.ServiceId)) return Results.BadRequest("Service does not exist");
+
+    var service = gatewayServices[endpoint.ServiceId];
+
+    endpoint.Path = service.Url.TrimEnd('/') + endpoint.Path;
+
     if (!gatewayEndpoints.TryAdd(endpoint.Id, endpoint)) return Results.Conflict($"Endpoint {endpoint.Id} already exists");
     return Results.Created($"/admin/endpoints/{endpoint.Id}", endpoint);
 });
 adminApp.MapPut("/admin/endpoints/{id}", (string id, EndpointConfig update) =>
 {
     if (!gatewayEndpoints.ContainsKey(id)) return Results.NotFound();
+
+    var service = gatewayServices[id];
+
     update.Id = id;
+    update.Path =  service.Url.TrimEnd('/') + update.Path;
     gatewayEndpoints[id] = update;
     return Results.Ok(update);
 });
