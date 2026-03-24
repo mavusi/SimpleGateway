@@ -1,0 +1,6 @@
+@SimpleGateway.Api_HostAddress = http://localhost:5023
+
+GET {{SimpleGateway.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

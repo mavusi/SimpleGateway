@@ -1,0 +1,7 @@
+.vs/*
+.github/*
+*.dll
+*.exe
+*.pdb
+api/SimpleGateway.Api/obj/*
+api/SimpleGateway.Api/bin/*
