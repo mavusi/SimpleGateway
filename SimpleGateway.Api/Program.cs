@@ -36,6 +36,15 @@ namespace SimpleGateway.Api
                 options.UseNpgsql(connectionString)
             );
 
+            // Ensure the app listens on ports 8000 (HTTP) and 8001 (HTTPS) when deployed.
+            // HTTP on 8000 and HTTPS on 8001. HTTPS will use the default certificate if available
+            // (in production provide a proper certificate or terminate TLS at a proxy).
+            builder.WebHost.ConfigureKestrel(serverOptions =>
+            {
+                serverOptions.ListenAnyIP(8000);
+                serverOptions.ListenAnyIP(8001);
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -44,7 +53,13 @@ namespace SimpleGateway.Api
                 app.MapOpenApi();
             }
 
-            app.UseHttpsRedirection();
+            // Do not use HTTPS redirection when running inside a container.
+            // Containers typically terminate TLS at the proxy/load balancer.
+            //var dotnetInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
+            //if (string.IsNullOrEmpty(dotnetInContainer) || !dotnetInContainer.Equals("true", StringComparison.OrdinalIgnoreCase))
+            //{
+            //    app.UseHttpsRedirection();
+            //}
 
             app.UseAuthorization();
 
