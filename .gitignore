@@ -3,5 +3,8 @@
 *.dll
 *.exe
 *.pdb
-api/SimpleGateway.Api/obj/*
-api/SimpleGateway.Api/bin/*
+/SimpleGateway.Api/obj/*
+/SimpleGateway.Api/bin/*
+/SimpleGateway.Api/obj/**
+/SimpleGateway.Api/obj/Debug/net10.0/*
+/SimpleGateway.Api/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json
