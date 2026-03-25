@@ -1,13 +1,30 @@
-version: '3.9'
+version: '3.8'
+
 services:
-  simplegateway-api:
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=simplegateway
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
     build:
       context: ./api/SimpleGateway.Api
       dockerfile: Dockerfile
-    image: simplegateway-api:latest
+    environment:
+      - POSTGRES_CONNECTION=Host=db;Port=5432;Database=simplegateway;Username=postgres;Password=postgres
+      - ASPNETCORE_ENVIRONMENT=Docker
+    depends_on:
+      - db
     ports:
       - "8000:8000"
       - "8001:8001"
-    environment:
-      ASPNETCORE_ENVIRONMENT: Docker
-      ASPNETCORE_URLS: http://+:8000;http://+:8001
+
+volumes:
+  pgdata:
+
