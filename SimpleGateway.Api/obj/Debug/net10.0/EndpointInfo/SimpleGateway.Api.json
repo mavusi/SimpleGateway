@@ -1,0 +1,56 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "SimpleGateway.Api | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:62827/"
+    },
+    {
+      "url": "https://localhost:44364/"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "Gateway"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/{path}": {
+      "get": {
+        "tags": [
+          "Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Gateway"
+    }
+  ]
+}

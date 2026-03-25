@@ -1,0 +1,28 @@
+[
+  {
+    "ContainingType": "SimpleGateway.Api.Controllers.GatewayController",
+    "Method": "Get",
+    "RelativePath": "",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "SimpleGateway.Api.Controllers.GatewayController",
+    "Method": "Get",
+    "RelativePath": "{path}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "path",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
