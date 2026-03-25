@@ -40,6 +40,26 @@ if (!gatewayApp.Environment.IsEnvironment("Docker"))
     gatewayApp.UseHttpsRedirection();
 }
 
+// Simple index for the gateway that links to admin UI and swagger
+gatewayApp.MapGet("/", (HttpRequest req) =>
+{
+    var host = string.IsNullOrWhiteSpace(req.Host.Host) ? "localhost" : req.Host.Host;
+    var scheme = req.Scheme ?? "http";
+    var adminUrl = $"{scheme}://{host}:8001/admin";
+    var swaggerUrl = $"{scheme}://{host}:8000/swagger";
+    var html = "<!doctype html>\n" +
+               "<html><head><meta charset=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>" +
+               "<title>SimpleGateway</title>" +
+               "<link href=\"https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css\" rel=\"stylesheet\"/>" +
+               "</head><body class=\"bg-gray-100 text-gray-900\">" +
+               "<div class=\"max-w-3xl mx-auto p-8\">" +
+               "<h1 class=\"text-2xl font-semibold mb-4\">SimpleGateway</h1>" +
+               $"<p class=\"mb-2\">Gateway swagger: <a class=\"text-blue-600 underline\" href=\"{swaggerUrl}\">{swaggerUrl}</a></p>" +
+               $"<p class=\"mb-2\">Admin UI: <a class=\"text-blue-600 underline\" href=\"{adminUrl}\">{adminUrl}</a></p>" +
+               "</div></body></html>";
+    return Results.Content(html, "text/html");
+});
+
 async Task<object> ProcessRequest(HttpRequest req, HttpUtil httpUtil, ILogger<Program> logger, JsonSerializerOptions jsonOptions, GatewayDbContext db)
 {
     logger.LogInformation("Processing request {Method} {Path}", req.Method, req.Path);
