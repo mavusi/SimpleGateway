@@ -2,71 +2,69 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using SimpleGateway.Api.Data;
+using System.Threading.Tasks;
 
 namespace SimpleGateway.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            // Build main gateway app (port 8000)
+            var builderMain = WebApplication.CreateBuilder(args);
+            ConfigureServices(builderMain);
+            builderMain.WebHost.ConfigureKestrel(opts => opts.ListenAnyIP(8000));
+            var appMain = builderMain.Build();
+            ConfigurePipeline(appMain);
 
-            // Add services to the container.
+            // Build admin app (port 8001)
+            var builderAdmin = WebApplication.CreateBuilder(args);
+            ConfigureServices(builderAdmin);
+            builderAdmin.WebHost.ConfigureKestrel(opts => opts.ListenAnyIP(8001));
+            var appAdmin = builderAdmin.Build();
+            ConfigurePipeline(appAdmin);
 
+            // Run both apps
+            await Task.WhenAll(appMain.RunAsync(), appAdmin.RunAsync());
+        }
+
+        private static void ConfigureServices(WebApplicationBuilder builder)
+        {
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            // Add Swagger generator for UI and JSON endpoint
+            builder.Services.AddSwaggerGen();
 
-            // Configure IHttpClientFactory and register a singleton HttpClient
-            builder.Services.AddHttpClient("singletonClient")
-                .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
-
+            builder.Services.AddHttpClient("singletonClient").SetHandlerLifetime(Timeout.InfiniteTimeSpan);
             builder.Services.AddSingleton(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("singletonClient"));
-
-            // Register HttpUtil in DI
             builder.Services.AddSingleton<SimpleGateway.Api.Utils.HttpUtil>();
 
-            // Configure PostgreSQL DbContext. Connection string can be provided via GATEWAYDB_CONNECTION env var.
             var envConn = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION");
             var connectionString = !string.IsNullOrWhiteSpace(envConn)
                 ? envConn
                 : "Host=localhost;Database=gatewaydb;Username=postgres;Password=postgres";
 
-            builder.Services.AddDbContext<GatewayDbContext>(options =>
-                options.UseNpgsql(connectionString)
-            );
+            builder.Services.AddDbContext<GatewayDbContext>(options => options.UseNpgsql(connectionString));
+        }
 
-            // Ensure the app listens on ports 8000 (HTTP) and 8001 (HTTPS) when deployed.
-            // HTTP on 8000 and HTTPS on 8001. HTTPS will use the default certificate if available
-            // (in production provide a proper certificate or terminate TLS at a proxy).
-            builder.WebHost.ConfigureKestrel(serverOptions =>
+        private static void ConfigurePipeline(WebApplication app)
+        {
+            // Enable Swagger UI and OpenAPI for both apps
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                serverOptions.ListenAnyIP(8000);
-                serverOptions.ListenAnyIP(8001);
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "SimpleGateway API V1");
+                c.RoutePrefix = "swagger"; // UI at /swagger
             });
 
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
+            // Keep MapOpenApi for the Microsoft OpenAPI endpoints in development
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
             }
 
-            // Do not use HTTPS redirection when running inside a container.
-            // Containers typically terminate TLS at the proxy/load balancer.
-            //var dotnetInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER");
-            //if (string.IsNullOrEmpty(dotnetInContainer) || !dotnetInContainer.Equals("true", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    app.UseHttpsRedirection();
-            //}
-
             app.UseAuthorization();
-
-
             app.MapControllers();
-
-            app.Run();
         }
     }
 }
