@@ -47,7 +47,7 @@ namespace SimpleGateway.Api
             builder.Services.AddSingleton<SimpleGateway.Api.Utils.HttpUtil>();
 
             // Prefer configuration (which includes environment variables) but fall back to Environment.GetEnvironmentVariable
-            var uri = builder.Configuration["POSTGRES_CONNECTION"] ?? Environment.GetEnvironmentVariable("POSTGRES_CONNECTION");
+            var uri = new Uri(builder.Configuration["POSTGRES_CONNECTION"] ?? Environment.GetEnvironmentVariable("POSTGRES_CONNECTION"));
             
             var connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]}";
 
