@@ -67,7 +67,6 @@ namespace SimpleGateway.Api.Controllers
                 var lookup = path.TrimStart('/');
 
                 var endpoint = await _db.Endpoints
-                    .Include(e => e.Service)
                     .FirstOrDefaultAsync(e => e.Path == path || e.Path == lookup || e.Path == "/" + lookup);
 
                 if (endpoint == null) return NotFound("GatewayEndpoint not found for path");
@@ -78,12 +77,13 @@ namespace SimpleGateway.Api.Controllers
                     return StatusCode(StatusCodes.Status405MethodNotAllowed);
                 }
 
-                if (endpoint.Service == null || string.IsNullOrWhiteSpace(endpoint.Service.Url))
+                var service = await _db.Services.FirstOrDefaultAsync(s => s.Id == endpoint.ServiceId);
+                if (service == null || string.IsNullOrWhiteSpace(service.Url))
                 {
                     return BadRequest("GatewayService or its URL is not configured for the endpoint");
                 }
 
-                var serviceUrl = endpoint.Service.Url.TrimEnd('/');
+                var serviceUrl = service.Url.TrimEnd('/');
                 var endpointPath = endpoint.Path ?? string.Empty;
                 endpointPath = endpointPath.TrimStart('/');
 

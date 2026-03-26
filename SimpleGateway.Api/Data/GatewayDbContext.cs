@@ -23,7 +23,7 @@ namespace SimpleGateway.Api.Data
                 b.Property(s => s.Name);
                 b.Property(s => s.Url);
                 b.Property(s => s.Path);
-                b.HasMany(s => s.Endpoints).WithOne(e => e.Service).HasForeignKey(e => e.ServiceId).OnDelete(DeleteBehavior.Cascade);
+                b.HasMany(s => s.Endpoints).WithOne().HasForeignKey(e => e.ServiceId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<SimpleGateway.Api.Models.GatewayEndpoint>(b =>

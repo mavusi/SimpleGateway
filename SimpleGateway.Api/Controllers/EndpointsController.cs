@@ -20,14 +20,14 @@ namespace SimpleGateway.Api.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var endpoints = await _db.Endpoints.Include(e => e.Service).ToListAsync();
+            var endpoints = await _db.Endpoints.ToListAsync();
             return View(endpoints);
         }
 
         public async Task<IActionResult> Details(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return NotFound();
-            var ep = await _db.Endpoints.Include(e => e.Service).FirstOrDefaultAsync(e => e.Id == id);
+            var ep = await _db.Endpoints.FirstOrDefaultAsync(e => e.Id == id);
             if (ep == null) return NotFound();
             return View(ep);
         }
@@ -108,7 +108,7 @@ namespace SimpleGateway.Api.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return NotFound();
-            var ep = await _db.Endpoints.Include(e => e.Service).FirstOrDefaultAsync(e => e.Id == id);
+            var ep = await _db.Endpoints.FirstOrDefaultAsync(e => e.Id == id);
             if (ep == null) return NotFound();
             return View(ep);
         }

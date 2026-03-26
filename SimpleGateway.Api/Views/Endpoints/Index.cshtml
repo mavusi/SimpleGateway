@@ -13,7 +13,7 @@
     <tbody>
 @foreach(var e in Model) {
     <tr>
-        <td>@(e.Service?.Name ?? e.ServiceId)</td>
+        <td>@e.ServiceId</td>
         <td>@e.Method</td>
         <td>@e.Path</td>
         <td>

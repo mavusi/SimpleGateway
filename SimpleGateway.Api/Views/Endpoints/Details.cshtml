@@ -1,7 +1,7 @@
 @model SimpleGateway.Api.Models.GatewayEndpoint
 <h2>Endpoint Details</h2>
 <div>
-    <strong>Service:</strong> @(Model.Service?.Name ?? Model.ServiceId)
+    <strong>Service:</strong> @Model.ServiceId
 </div>
 <div>
     <strong>Method:</strong> @Model.Method

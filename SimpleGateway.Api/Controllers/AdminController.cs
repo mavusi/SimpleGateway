@@ -85,16 +85,16 @@ namespace SimpleGateway.Api.Controllers
         [HttpGet("endpoints")]
         public async Task<IActionResult> GetEndpoints()
         {
-            
-            var endpoints = await _db.Endpoints.Include(e => e.Service).ToListAsync();
+
+            var endpoints = await _db.Endpoints.ToListAsync();
             return Ok(endpoints);
         }
 
         [HttpGet("endpoints/{id}")]
         public async Task<IActionResult> GetEndpoint(string id)
         {
-            
-            var ep = await _db.Endpoints.Include(e => e.Service).FirstOrDefaultAsync(e => e.Id == id);
+
+            var ep = await _db.Endpoints.FirstOrDefaultAsync(e => e.Id == id);
             if (ep == null) return NotFound();
             return Ok(ep);
         }
