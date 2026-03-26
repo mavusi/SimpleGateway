@@ -92,6 +92,7 @@ namespace SimpleGateway.Api
 
         private static void ConfigureAdminPipeline(WebApplication app)
         {
+            app.MapOpenApi();
             app.MapScalarApiReference();
 
             // Serve static files and enable MVC routes for the admin UI
