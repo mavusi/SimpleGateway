@@ -43,7 +43,7 @@ namespace SimpleGateway.Api
             var envConn = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION");
             var connectionString = !string.IsNullOrWhiteSpace(envConn)
                 ? envConn
-                : "Host=localhost;Database=gatewaydb;Username=postgres;Password=postgres";
+                : "Host=wronghost;Database=gatewaydb;Username=postgres;Password=postgres";
 
             builder.Services.AddDbContext<GatewayDbContext>(options => options.UseNpgsql(connectionString));
         }
