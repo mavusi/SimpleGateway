@@ -87,11 +87,11 @@ namespace SimpleGateway.Api
             app.UseStaticFiles();
             app.UseAuthorization();
 
-            // Map MVC controllers (ServicesController, EndpointsController) with conventional routing
+            // Map MVC controllers (HomeController, ServicesController, EndpointsController) with conventional routing
             // This must come before MapControllers to prevent GatewayController catch-all from intercepting
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Services}/{action=Index}/{id?}");
+                pattern: "{controller=Home}/{action=Index}/{id?}");
 
             // Map AdminController API routes (e.g., /admin/services)
             // These are more specific than GatewayController's catch-all and will match first

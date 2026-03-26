@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Home";
+}
+
+<h2>Welcome to SimpleGateway Admin</h2>
+<p>Manage your gateway services and endpoints from here.</p>
+
+<div style="margin-top: 30px;">
+    <div style="display: inline-block; margin-right: 40px; vertical-align: top;">
+        <h3>Services</h3>
+        <p>Configure backend services that the gateway will proxy requests to.</p>
+        <p><a href="/Services" style="padding: 10px 20px; background: #0078d4; color: white; text-decoration: none; border-radius: 4px; display: inline-block;">Manage Services</a></p>
+    </div>
+    
+    <div style="display: inline-block; vertical-align: top;">
+        <h3>Endpoints</h3>
+        <p>Define endpoint mappings for routing incoming requests to services.</p>
+        <p><a href="/Endpoints" style="padding: 10px 20px; background: #0078d4; color: white; text-decoration: none; border-radius: 4px; display: inline-block;">Manage Endpoints</a></p>
+    </div>
+</div>
+
+<div style="margin-top: 40px; padding: 15px; background: #f0f0f0; border-left: 4px solid #0078d4;">
+    <h4>Quick Start</h4>
+    <ol>
+        <li>Create a <strong>Service</strong> pointing to your backend API</li>
+        <li>Create <strong>Endpoints</strong> to map incoming paths to your service</li>
+        <li>Access your proxied endpoints on port 8000</li>
+    </ol>
+</div>
