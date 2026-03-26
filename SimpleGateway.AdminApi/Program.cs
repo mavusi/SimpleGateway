@@ -51,8 +51,6 @@ namespace SimpleGateway.AdminApi
                 app.MapOpenApi();
             }
 
-            app.UseHttpsRedirection();
-
             app.UseAuthorization();
 
             app.MapControllers();
