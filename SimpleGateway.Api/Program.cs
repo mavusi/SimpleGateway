@@ -47,11 +47,12 @@ namespace SimpleGateway.Api
             builder.Services.AddSingleton<SimpleGateway.Api.Utils.HttpUtil>();
 
             // Prefer configuration (which includes environment variables) but fall back to Environment.GetEnvironmentVariable
-            var envConn = builder.Configuration["POSTGRES_CONNECTION"] ?? Environment.GetEnvironmentVariable("POSTGRES_CONNECTION");
-            var connectionString = !string.IsNullOrWhiteSpace(envConn)
-                ? envConn
-                : "Host=wronghost;Database=gatewaydb;Username=postgres;Password=postgres";
+            var uri = builder.Configuration["POSTGRES_CONNECTION"] ?? Environment.GetEnvironmentVariable("POSTGRES_CONNECTION");
+            
+            var connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]}";
 
+
+            Console.WriteLine($"Using DB URI connection string: {uri}");
             Console.WriteLine($"Using DB connection string: {connectionString}");
             //Console.Write(JsonSerializer.Serialize(builder.Configuration.AsEnumerable().ToList()));
             //Console.WriteLine(JsonSerializer.Serialize(Environment.GetEnvironmentVariables()));
