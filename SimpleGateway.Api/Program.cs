@@ -52,28 +52,11 @@ namespace SimpleGateway.Api
                 ? envConn
                 : "Host=wronghost;Database=gatewaydb;Username=postgres;Password=postgres";
 
+            Console.WriteLine($"Using DB connection string: {connectionString}");
             //Console.Write(JsonSerializer.Serialize(builder.Configuration.AsEnumerable().ToList()));
             //Console.WriteLine(JsonSerializer.Serialize(Environment.GetEnvironmentVariables()));
             // Log the fact that we resolved a connection string (mask password when printing)
-            try
-            {
-                var masked = connectionString;
-                var pwdIndex = masked?.IndexOf("Password=", StringComparison.OrdinalIgnoreCase) ?? -1;
-                if (pwdIndex >= 0)
-                {
-                    var semicolon = masked.IndexOf(';', pwdIndex);
-                    if (semicolon > pwdIndex)
-                        masked = masked.Substring(0, pwdIndex + 9) + "***" + masked.Substring(semicolon);
-                    else
-                        masked = masked.Substring(0, pwdIndex + 9) + "***";
-                }
-                Console.WriteLine($"Using DB connection string: {masked}");
-            }
-            catch
-            {
-                // Ignore any logging failure during startup
-            }
-
+           
             builder.Services.AddDbContext<GatewayDbContext>(options => options.UseNpgsql(connectionString));
         }
 
