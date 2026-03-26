@@ -34,6 +34,10 @@ namespace SimpleGateway.Api
 
         private static void ConfigureServices(WebApplicationBuilder builder)
         {
+            builder.Configuration
+                //.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                //.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
             
