@@ -4,7 +4,8 @@ services:
       context: .
       dockerfile: SimpleGateway.Api/Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=Docker
+      ASPNETCORE_ENVIRONMENT: Docker
+      POSTGRES_CONNECTION: ${POSTGRES_CONNECTION}
     ports:
       - "8000:8000"
       - "8001:8001"
