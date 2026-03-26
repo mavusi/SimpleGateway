@@ -49,17 +49,28 @@ namespace SimpleGateway.Api
                 //.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 //.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
+
+            var appMode = builder.Configuration["AppMode"];
+
             // Enable controllers and Razor views for admin UI
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews(options =>
+            {
+                // In Admin mode, exclude GatewayController to prevent routing conflicts
+                if (appMode == "Admin")
+                {
+                    options.Conventions.Add(new ExcludeControllerConvention("Gateway"));
+                }
+            });
+
             builder.Services.AddOpenApi();
-            
+
             builder.Services.AddHttpClient("singletonClient").SetHandlerLifetime(Timeout.InfiniteTimeSpan);
             builder.Services.AddSingleton(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("singletonClient"));
             builder.Services.AddSingleton<SimpleGateway.Api.Utils.HttpUtil>();
 
             // Prefer configuration (which includes environment variables) but fall back to Environment.GetEnvironmentVariable
             var uri = new Uri(builder.Configuration["POSTGRES_CONNECTION"] ?? Environment.GetEnvironmentVariable("POSTGRES_CONNECTION"));
-            
+
             var connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]}";
 
 
@@ -68,7 +79,7 @@ namespace SimpleGateway.Api
             //Console.Write(JsonSerializer.Serialize(builder.Configuration.AsEnumerable().ToList()));
             //Console.WriteLine(JsonSerializer.Serialize(Environment.GetEnvironmentVariables()));
             // Log the fact that we resolved a connection string (mask password when printing)
-           
+
             builder.Services.AddDbContext<GatewayDbContext>(options => options.UseNpgsql(connectionString));
         }
 
@@ -88,14 +99,34 @@ namespace SimpleGateway.Api
             app.UseAuthorization();
 
             // Map MVC controllers (HomeController, ServicesController, EndpointsController) with conventional routing
-            // This must come before MapControllers to prevent GatewayController catch-all from intercepting
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             // Map AdminController API routes (e.g., /admin/services)
-            // These are more specific than GatewayController's catch-all and will match first
             app.MapControllers();
+        }
+    }
+
+    // Convention to exclude specific controllers from being discovered
+    public class ExcludeControllerConvention : Microsoft.AspNetCore.Mvc.ApplicationModels.IApplicationModelConvention
+    {
+        private readonly string _controllerName;
+
+        public ExcludeControllerConvention(string controllerName)
+        {
+            _controllerName = controllerName;
+        }
+
+        public void Apply(Microsoft.AspNetCore.Mvc.ApplicationModels.ApplicationModel application)
+        {
+            var controllerToRemove = application.Controllers
+                .FirstOrDefault(c => c.ControllerName.Equals(_controllerName, StringComparison.OrdinalIgnoreCase));
+
+            if (controllerToRemove != null)
+            {
+                application.Controllers.Remove(controllerToRemove);
+            }
         }
     }
 }

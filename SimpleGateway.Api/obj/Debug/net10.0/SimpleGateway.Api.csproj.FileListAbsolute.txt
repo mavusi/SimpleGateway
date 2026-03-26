@@ -109,3 +109,4 @@ C:\dev\personal\SimpleGateway\SimpleGateway.Api\bin\Debug\net10.0\zh-Hant\Micros
 C:\dev\personal\SimpleGateway\SimpleGateway.Api\bin\Debug\net10.0\Scalar.AspNetCore.dll
 C:\dev\personal\SimpleGateway\SimpleGateway.Api\obj\Debug\net10.0\SimpleGateway.Api.RazorAssemblyInfo.cache
 C:\dev\personal\SimpleGateway\SimpleGateway.Api\obj\Debug\net10.0\SimpleGateway.Api.RazorAssemblyInfo.cs
+C:\dev\personal\SimpleGateway\SimpleGateway.Api\bin\Debug\net10.0\SimpleGateway.Api.staticwebassets.runtime.json
