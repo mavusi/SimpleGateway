@@ -1,6 +1,6 @@
 @model SimpleGateway.Api.Models.GatewayService
 <h2>Create Service</h2>
-<form method="post" action="">
+<form asp-action="Create" method="post">
     <div>
         <label>Name</label><br />
         <input name="Name" value="@Model?.Name" />

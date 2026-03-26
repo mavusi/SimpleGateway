@@ -1,6 +1,6 @@
 @model SimpleGateway.Api.Models.GatewayService
 <h2>Edit Service</h2>
-<form method="post" action="">
+<form asp-action="Edit" method="post">
     <input type="hidden" name="Id" value="@Model?.Id" />
     <div>
         <label>Name</label><br />
