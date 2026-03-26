@@ -52,7 +52,7 @@ namespace SimpleGateway.Api
                 : "Host=wronghost;Database=gatewaydb;Username=postgres;Password=postgres";
 
             Console.Write(JsonSerializer.Serialize(builder.Configuration.AsEnumerable().ToList()));
-
+            Console.WriteLine(JsonSerializer.Serialize(Environment.GetEnvironmentVariables()));
             // Log the fact that we resolved a connection string (mask password when printing)
             try
             {
