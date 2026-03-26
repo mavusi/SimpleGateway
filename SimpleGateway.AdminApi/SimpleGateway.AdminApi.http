@@ -1,0 +1,6 @@
+@SimpleGateway.AdminApi_HostAddress = http://localhost:5062
+
+GET {{SimpleGateway.AdminApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

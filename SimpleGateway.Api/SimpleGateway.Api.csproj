@@ -20,4 +20,8 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.13.15" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleGateway.DataAccess\SimpleGateway.DataAccess.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Linq;
-using SimpleGateway.Api.Data;
-using SimpleGateway.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using System;
+using SimpleGateway.DataAccess;
+using SimpleGateway.DataAccess.Models;
 
 namespace SimpleGateway.Api.Controllers
 {

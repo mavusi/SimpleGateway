@@ -4,12 +4,9 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8000
-EXPOSE 8001
+EXPOSE 80
 
-# Ensure ASP.NET Core listens on the ports Kestrel is configured for.
-# HTTP on 8000 and HTTPS on 8001 (HTTPS will be ignored inside the container per Program.cs logic).
-ENV ASPNETCORE_URLS="http://+:8000;https://+:8001"
+ENV ASPNETCORE_URLS="http://+:80"
 
 
 # This stage is used to build the service project
@@ -17,6 +14,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["SimpleGateway.Api/SimpleGateway.Api.csproj", "SimpleGateway.Api/"]
+COPY ["SimpleGateway.DataAccess/SimpleGateway.DataAccess.csproj", "SimpleGateway.DataAccess/"]
 RUN dotnet restore "./SimpleGateway.Api/SimpleGateway.Api.csproj"
 COPY . .
 WORKDIR "/src/SimpleGateway.Api"

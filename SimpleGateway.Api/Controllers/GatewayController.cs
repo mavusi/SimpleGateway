@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using SimpleGateway.Api.Utils;
 using System.Dynamic;
-using SimpleGateway.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using SimpleGateway.DataAccess;
 
 namespace SimpleGateway.Api.Controllers
 {

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using SimpleGateway.Api.Data;
-using SimpleGateway.Api.Models;
+using SimpleGateway.DataAccess;
+using SimpleGateway.DataAccess.Models;
 using System;
 using System.Linq;
 using System.Threading.Tasks;

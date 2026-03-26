@@ -1,9 +1,9 @@
 using System;
 using Microsoft.EntityFrameworkCore;
-using SimpleGateway.Api.Data;
 using System.Threading.Tasks;
 using Scalar.AspNetCore;
 using System.Text.Json;
+using SimpleGateway.DataAccess;
 
 namespace SimpleGateway.Api
 {
