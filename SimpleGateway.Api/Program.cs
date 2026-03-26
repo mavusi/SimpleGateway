@@ -1,4 +1,3 @@
-
 using System;
 using Microsoft.EntityFrameworkCore;
 using SimpleGateway.Api.Data;
@@ -30,6 +29,12 @@ namespace SimpleGateway.Api
 
             // Run both apps
             await Task.WhenAll(appMain.RunAsync(), appAdmin.RunAsync());
+
+            using (var scope = appMain.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
+                await dbContext.Database.MigrateAsync();
+            }
         }
 
         private static void ConfigureServices(WebApplicationBuilder builder)
