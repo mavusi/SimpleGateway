@@ -8,6 +8,7 @@ using System.Dynamic;
 using SimpleGateway.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 
 namespace SimpleGateway.Api.Controllers
 {
@@ -16,11 +17,13 @@ namespace SimpleGateway.Api.Controllers
     {
         private readonly HttpUtil _httpUtil;
         private readonly GatewayDbContext _db;
+        private readonly IConfiguration _configuration;
 
-        public GatewayController(HttpUtil httpUtil, GatewayDbContext db)
+        public GatewayController(HttpUtil httpUtil, GatewayDbContext db, IConfiguration configuration)
         {
             _httpUtil = httpUtil;
             _db = db;
+            _configuration = configuration;
         }
 
         [AcceptVerbs("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS")]
@@ -28,6 +31,11 @@ namespace SimpleGateway.Api.Controllers
         [Route("{**path}")]
         public async Task<IActionResult> Get(string? path = null)
         {
+            // Only handle gateway requests if running in Gateway mode
+            if (_configuration["AppMode"] != "Gateway")
+            {
+                return NotFound();
+            }
             // Enable buffering so the request body can be read here
             Request.EnableBuffering();
 

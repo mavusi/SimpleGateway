@@ -13,19 +13,21 @@ namespace SimpleGateway.Api
         {
             // Build main gateway app (port 8000)
             var builderMain = WebApplication.CreateBuilder(args);
+            builderMain.Configuration["AppMode"] = "Gateway";
             ConfigureServices(builderMain);
             builderMain.WebHost.ConfigureKestrel(opts => opts.ListenAnyIP(8000));
             var appMain = builderMain.Build();
-            
-            ConfigurePipeline(appMain);
+
+            ConfigureGatewayPipeline(appMain);
 
             // Build admin app (port 8001)
             var builderAdmin = WebApplication.CreateBuilder(args);
+            builderAdmin.Configuration["AppMode"] = "Admin";
             ConfigureServices(builderAdmin);
             builderAdmin.WebHost.ConfigureKestrel(opts => opts.ListenAnyIP(8001));
             var appAdmin = builderAdmin.Build();
-            
-            ConfigurePipeline(appAdmin);
+
+            ConfigureAdminPipeline(appAdmin);
 
             using (var scope = appMain.Services.CreateScope())
             {
@@ -38,7 +40,7 @@ namespace SimpleGateway.Api
             // Run both apps
             await Task.WhenAll(appMain.RunAsync(), appAdmin.RunAsync());
 
-            
+
         }
 
         private static void ConfigureServices(WebApplicationBuilder builder)
@@ -70,17 +72,30 @@ namespace SimpleGateway.Api
             builder.Services.AddDbContext<GatewayDbContext>(options => options.UseNpgsql(connectionString));
         }
 
-        private static void ConfigurePipeline(WebApplication app)
+        private static void ConfigureGatewayPipeline(WebApplication app)
+        {
+            // Only map API controllers with attribute routing (will include GatewayController)
+            // Since GatewayController has catch-all routes, it will handle all gateway traffic
+            app.MapControllers();
+        }
+
+        private static void ConfigureAdminPipeline(WebApplication app)
         {
             app.MapScalarApiReference();
 
             // Serve static files and enable MVC routes for the admin UI
             app.UseStaticFiles();
             app.UseAuthorization();
-            app.MapControllers();
+
+            // Map MVC controllers (ServicesController, EndpointsController) with conventional routing
+            // This must come before MapControllers to prevent GatewayController catch-all from intercepting
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Services}/{action=Index}/{id?}");
+
+            // Map AdminController API routes (e.g., /admin/services)
+            // These are more specific than GatewayController's catch-all and will match first
+            app.MapControllers();
         }
     }
 }
