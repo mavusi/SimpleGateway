@@ -32,8 +32,10 @@ namespace SimpleGateway.Api
 
             using (var scope = appMain.Services.CreateScope())
             {
+                Console.WriteLine("Applying database migrations...");
                 var dbContext = scope.ServiceProvider.GetRequiredService<GatewayDbContext>();
                 await dbContext.Database.MigrateAsync();
+                Console.WriteLine("Database migrations applied successfully.");
             }
         }
 
