@@ -1,0 +1,20 @@
+@model SimpleGateway.Api.Models.GatewayService
+<h2>Create Service</h2>
+<form method="post" action="">
+    <div>
+        <label>Name</label><br />
+        <input name="Name" value="@Model?.Name" />
+    </div>
+    <div>
+        <label>Url</label><br />
+        <input name="Url" value="@Model?.Url" />
+    </div>
+    <div>
+        <label>Path</label><br />
+        <input name="Path" value="@Model?.Path" />
+    </div>
+    <div style="margin-top:10px">
+        <button type="submit">Create</button>
+        <a href="/Services">Cancel</a>
+    </div>
+</form>

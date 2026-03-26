@@ -1,0 +1,9 @@
+@model SimpleGateway.Api.Models.GatewayEndpoint
+<h2>Delete Endpoint</h2>
+<div>
+    Are you sure you want to delete the endpoint "@Model.Path" for service "@(Model.Service?.Name ?? Model.ServiceId)"?
+</div>
+<form method="post" action="">
+    <button type="submit">Delete</button>
+    <a href="/Endpoints">Cancel</a>
+</form>

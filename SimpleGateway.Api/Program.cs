@@ -38,7 +38,8 @@ namespace SimpleGateway.Api
                 //.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 //.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
-            builder.Services.AddControllers();
+            // Enable controllers and Razor views for admin UI
+            builder.Services.AddControllersWithViews();
             builder.Services.AddOpenApi();
             
             builder.Services.AddHttpClient("singletonClient").SetHandlerLifetime(Timeout.InfiniteTimeSpan);
@@ -80,8 +81,13 @@ namespace SimpleGateway.Api
         {
             app.MapScalarApiReference();
 
+            // Serve static files and enable MVC routes for the admin UI
+            app.UseStaticFiles();
             app.UseAuthorization();
             app.MapControllers();
+            app.MapControllerRoute(
+                name: "default",
+                pattern: "{controller=Services}/{action=Index}/{id?}");
         }
     }
 }
