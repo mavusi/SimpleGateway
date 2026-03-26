@@ -12,7 +12,8 @@
           "Microsoft.EntityFrameworkCore": "8.0.10",
           "Microsoft.EntityFrameworkCore.Design": "8.0.10",
           "Newtonsoft.Json": "13.0.4",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "8.0.8"
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "8.0.8",
+          "Scalar.AspNetCore": "2.13.15"
         },
         "runtime": {
           "SimpleGateway.Api.dll": {}
@@ -358,6 +359,14 @@
           }
         }
       },
+      "Scalar.AspNetCore/2.13.15": {
+        "runtime": {
+          "lib/net10.0/Scalar.AspNetCore.dll": {
+            "assemblyVersion": "2.13.15.0",
+            "fileVersion": "2.13.15.0"
+          }
+        }
+      },
       "System.CodeDom/4.4.0": {
         "runtime": {
           "lib/netstandard2.0/System.CodeDom.dll": {
@@ -552,6 +561,13 @@
       "sha512": "sha512-D5WWJZJTgZYUmGv66BARXbTlinp2a5f5RueJqGYoHuWJw02J0i2va/RA+8N4A5hLORK5YKMRqXhFWtKsZdrksw==",
       "path": "npgsql.entityframeworkcore.postgresql/8.0.8",
       "hashPath": "npgsql.entityframeworkcore.postgresql.8.0.8.nupkg.sha512"
+    },
+    "Scalar.AspNetCore/2.13.15": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ufSBk0vdDnrhn+YLGElUdegUkM+hb7xUoySH+oaZrNHi2fAm+oeSCr60Lqmm4OeLBhPKd2htr/DANOvjuNT6rg==",
+      "path": "scalar.aspnetcore/2.13.15",
+      "hashPath": "scalar.aspnetcore.2.13.15.nupkg.sha512"
     },
     "System.CodeDom/4.4.0": {
       "type": "package",
