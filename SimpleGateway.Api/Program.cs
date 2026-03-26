@@ -27,9 +27,6 @@ namespace SimpleGateway.Api
             
             ConfigurePipeline(appAdmin);
 
-            // Run both apps
-            await Task.WhenAll(appMain.RunAsync(), appAdmin.RunAsync());
-
             using (var scope = appMain.Services.CreateScope())
             {
                 Console.WriteLine("Applying database migrations...");
@@ -37,6 +34,11 @@ namespace SimpleGateway.Api
                 await dbContext.Database.MigrateAsync();
                 Console.WriteLine("Database migrations applied successfully.");
             }
+
+            // Run both apps
+            await Task.WhenAll(appMain.RunAsync(), appAdmin.RunAsync());
+
+            
         }
 
         private static void ConfigureServices(WebApplicationBuilder builder)
