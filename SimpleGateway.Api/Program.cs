@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SimpleGateway.Api.Data;
 using System.Threading.Tasks;
 using Scalar.AspNetCore;
+using System.Text.Json;
 
 namespace SimpleGateway.Api
 {
@@ -45,6 +46,8 @@ namespace SimpleGateway.Api
             var connectionString = !string.IsNullOrWhiteSpace(envConn)
                 ? envConn
                 : "Host=wronghost;Database=gatewaydb;Username=postgres;Password=postgres";
+
+            Console.Write(JsonSerializer.Serialize(builder.Configuration.AsEnumerable().ToList()));
 
             // Log the fact that we resolved a connection string (mask password when printing)
             try
