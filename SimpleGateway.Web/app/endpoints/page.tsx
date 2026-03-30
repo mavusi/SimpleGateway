@@ -2,6 +2,13 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+type GatewayService = {
+  id?: string;
+  name?: string;
+  url?: string;
+  path?: string;
+};
+
 type GatewayEndpoint = {
   id?: string;
   serviceId?: string;
@@ -9,27 +16,21 @@ type GatewayEndpoint = {
   path?: string;
 };
 
-type GatewayService = {
-  id?: string;
-  name?: string;
-  url?: string;
-  path?: string;
-  endpoints?: GatewayEndpoint[];
-};
-
-type ServiceFormState = {
+type EndpointFormState = {
   id: string;
-  name: string;
-  url: string;
+  serviceId: string;
+  method: string;
   path: string;
 };
 
-const EMPTY_FORM: ServiceFormState = {
+const EMPTY_FORM: EndpointFormState = {
   id: "",
-  name: "",
-  url: "",
+  serviceId: "",
+  method: "GET",
   path: "",
 };
+
+const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
 function normalizeArray<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) {
@@ -59,29 +60,54 @@ function normalizeArray<T>(payload: unknown): T[] {
   return [];
 }
 
-export default function ServicesPage() {
+export default function EndpointsPage() {
+  const [endpoints, setEndpoints] = useState<GatewayEndpoint[]>([]);
   const [services, setServices] = useState<GatewayService[]>([]);
-  const [form, setForm] = useState<ServiceFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<EndpointFormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isEditMode = useMemo(() => form.id.trim().length > 0, [form.id]);
 
-  const fetchServices = async () => {
+  const fetchAll = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/services", { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`Failed to load services (${response.status})`);
+      const [endpointsResponse, servicesResponse] = await Promise.all([
+        fetch("/api/admin/endpoints", { cache: "no-store" }),
+        fetch("/api/admin/services", { cache: "no-store" }),
+      ]);
+
+      if (!endpointsResponse.ok) {
+        throw new Error(`Failed to load endpoints (${endpointsResponse.status})`);
       }
 
-      const json = (await response.json()) as unknown;
-      setServices(normalizeArray<GatewayService>(json));
+      if (!servicesResponse.ok) {
+        throw new Error(`Failed to load services (${servicesResponse.status})`);
+      }
+
+      const [endpointsJson, servicesJson] = await Promise.all([
+        endpointsResponse.json() as Promise<unknown>,
+        servicesResponse.json() as Promise<unknown>,
+      ]);
+
+      const nextServices = normalizeArray<GatewayService>(servicesJson);
+      setServices(nextServices);
+
+      const nextEndpoints = normalizeArray<GatewayEndpoint>(endpointsJson);
+      setEndpoints(nextEndpoints);
+
+      if (!form.serviceId && nextServices.length > 0) {
+        setForm((current) => ({
+          ...current,
+          serviceId: current.serviceId || nextServices[0].id || "",
+        }));
+      }
     } catch (fetchError) {
-      setError(fetchError instanceof Error ? fetchError.message : "Failed to load services");
+      setError(fetchError instanceof Error ? fetchError.message : "Failed to load endpoints");
+      setEndpoints([]);
       setServices([]);
     } finally {
       setLoading(false);
@@ -89,11 +115,14 @@ export default function ServicesPage() {
   };
 
   useEffect(() => {
-    void fetchServices();
+    void fetchAll();
   }, []);
 
   const resetForm = () => {
-    setForm(EMPTY_FORM);
+    setForm((current) => ({
+      ...EMPTY_FORM,
+      serviceId: services[0]?.id ?? "",
+    }));
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -103,15 +132,14 @@ export default function ServicesPage() {
 
     const payload = {
       id: form.id || undefined,
-      name: form.name,
-      url: form.url,
+      serviceId: form.serviceId,
+      method: form.method,
       path: form.path,
-      endpoints: [],
     };
 
     try {
       if (isEditMode) {
-        const response = await fetch(`/api/admin/services/${encodeURIComponent(form.id)}`, {
+        const response = await fetch(`/api/admin/endpoints/${encodeURIComponent(form.id)}`, {
           method: "PUT",
           headers: {
             "content-type": "application/json",
@@ -120,10 +148,10 @@ export default function ServicesPage() {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to update service (${response.status})`);
+          throw new Error(`Failed to update endpoint (${response.status})`);
         }
       } else {
-        const response = await fetch("/api/admin/services", {
+        const response = await fetch("/api/admin/endpoints", {
           method: "POST",
           headers: {
             "content-type": "application/json",
@@ -132,51 +160,51 @@ export default function ServicesPage() {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to create service (${response.status})`);
+          throw new Error(`Failed to create endpoint (${response.status})`);
         }
       }
 
       resetForm();
-      await fetchServices();
+      await fetchAll();
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to save service");
+      setError(submitError instanceof Error ? submitError.message : "Failed to save endpoint");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleEdit = (service: GatewayService) => {
+  const handleEdit = (endpoint: GatewayEndpoint) => {
     setForm({
-      id: service.id ?? "",
-      name: service.name ?? "",
-      url: service.url ?? "",
-      path: service.path ?? "",
+      id: endpoint.id ?? "",
+      serviceId: endpoint.serviceId ?? services[0]?.id ?? "",
+      method: (endpoint.method ?? "GET").toUpperCase(),
+      path: endpoint.path ?? "",
     });
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this service?")) {
+    if (!window.confirm("Delete this endpoint?")) {
       return;
     }
 
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/services/${encodeURIComponent(id)}`, {
+      const response = await fetch(`/api/admin/endpoints/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to delete service (${response.status})`);
+        throw new Error(`Failed to delete endpoint (${response.status})`);
       }
 
       if (form.id === id) {
         resetForm();
       }
 
-      await fetchServices();
+      await fetchAll();
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete service");
+      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete endpoint");
     }
   };
 
@@ -184,8 +212,8 @@ export default function ServicesPage() {
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Services</h1>
-          <p className="text-sm text-slate-600">List and manage gateway services.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Endpoints</h1>
+          <p className="text-sm text-slate-600">List and manage gateway endpoints.</p>
         </div>
         <button
           type="button"
@@ -194,7 +222,7 @@ export default function ServicesPage() {
           }}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
         >
-          New Service
+          New Endpoint
         </button>
       </header>
 
@@ -203,48 +231,58 @@ export default function ServicesPage() {
       ) : null}
 
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        <h2 className="mb-4 text-lg font-medium text-slate-900">{isEditMode ? "Edit Service" : "Create Service"}</h2>
+        <h2 className="mb-4 text-lg font-medium text-slate-900">{isEditMode ? "Edit Endpoint" : "Create Endpoint"}</h2>
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
           <label className="space-y-1 text-sm text-slate-700">
-            <span>Name</span>
-            <input
+            <span>Service</span>
+            <select
               required
-              value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              value={form.serviceId}
+              onChange={(event) => setForm((current) => ({ ...current, serviceId: event.target.value }))}
               className="w-full rounded-md border border-slate-300 px-3 py-2"
-              placeholder="Orders API"
-            />
+            >
+              {services.map((service) => (
+                <option key={service.id ?? service.name} value={service.id}>
+                  {service.name ?? service.id}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="space-y-1 text-sm text-slate-700">
-            <span>Base URL</span>
-            <input
+            <span>Method</span>
+            <select
               required
-              value={form.url}
-              onChange={(event) => setForm((current) => ({ ...current, url: event.target.value }))}
+              value={form.method}
+              onChange={(event) => setForm((current) => ({ ...current, method: event.target.value }))}
               className="w-full rounded-md border border-slate-300 px-3 py-2"
-              placeholder="https://service.local"
-            />
+            >
+              {HTTP_METHODS.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
-            <span>Path Prefix</span>
+            <span>Path</span>
             <input
               required
               value={form.path}
               onChange={(event) => setForm((current) => ({ ...current, path: event.target.value }))}
               className="w-full rounded-md border border-slate-300 px-3 py-2"
-              placeholder="/orders"
+              placeholder="/orders/{id}"
             />
           </label>
 
           <div className="sm:col-span-2 flex flex-wrap gap-3">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || services.length === 0}
               className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
             >
-              {saving ? "Saving..." : isEditMode ? "Update Service" : "Create Service"}
+              {saving ? "Saving..." : isEditMode ? "Update Endpoint" : "Create Endpoint"}
             </button>
             {isEditMode ? (
               <button
@@ -261,43 +299,43 @@ export default function ServicesPage() {
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-4 py-3 sm:px-6">
-          <h2 className="text-lg font-medium text-slate-900">Services List</h2>
+          <h2 className="text-lg font-medium text-slate-900">Endpoints List</h2>
         </div>
 
         {loading ? (
-          <p className="px-4 py-6 text-sm text-slate-600 sm:px-6">Loading services...</p>
-        ) : services.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-slate-600 sm:px-6">No services found.</p>
+          <p className="px-4 py-6 text-sm text-slate-600 sm:px-6">Loading endpoints...</p>
+        ) : endpoints.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-slate-600 sm:px-6">No endpoints found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-700">
                 <tr>
-                  <th className="px-4 py-3 font-semibold sm:px-6">Name</th>
-                  <th className="px-4 py-3 font-semibold sm:px-6">URL</th>
+                  <th className="px-4 py-3 font-semibold sm:px-6">Service ID</th>
+                  <th className="px-4 py-3 font-semibold sm:px-6">Method</th>
                   <th className="px-4 py-3 font-semibold sm:px-6">Path</th>
                   <th className="px-4 py-3 font-semibold sm:px-6">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {services.map((service) => (
-                  <tr key={service.id ?? `${service.name}-${service.path}`} className="border-t border-slate-200">
-                    <td className="px-4 py-3 sm:px-6">{service.name ?? "-"}</td>
-                    <td className="px-4 py-3 sm:px-6">{service.url ?? "-"}</td>
-                    <td className="px-4 py-3 sm:px-6">{service.path ?? "-"}</td>
+                {endpoints.map((endpoint) => (
+                  <tr key={endpoint.id ?? `${endpoint.serviceId}-${endpoint.path}-${endpoint.method}`} className="border-t border-slate-200">
+                    <td className="px-4 py-3 sm:px-6">{endpoint.serviceId ?? "-"}</td>
+                    <td className="px-4 py-3 sm:px-6">{endpoint.method ?? "-"}</td>
+                    <td className="px-4 py-3 sm:px-6">{endpoint.path ?? "-"}</td>
                     <td className="px-4 py-3 sm:px-6">
                       <div className="flex gap-3">
                         <button
                           type="button"
-                          onClick={() => handleEdit(service)}
+                          onClick={() => handleEdit(endpoint)}
                           className="text-slate-700 hover:text-slate-900"
                         >
                           Edit
                         </button>
-                        {service.id ? (
+                        {endpoint.id ? (
                           <button
                             type="button"
-                            onClick={() => void handleDelete(service.id as string)}
+                            onClick={() => void handleDelete(endpoint.id as string)}
                             className="text-rose-600 hover:text-rose-700"
                           >
                             Delete

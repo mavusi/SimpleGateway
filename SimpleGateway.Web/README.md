@@ -29,6 +29,22 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Docker Compose
+
+1. Set your API base URL in `.env` (or export it in your shell):
+
+```bash
+API_BASE_URL=http://192.168.1.9:8001
+```
+
+2. Build and run the app:
+
+```bash
+docker compose up --build -d
+```
+
+The Next.js app exposes port `3000` and proxies API calls through server routes using the `API_BASE_URL` environment variable.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

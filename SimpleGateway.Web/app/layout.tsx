@@ -30,9 +30,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <header className="border-b border-black/10 px-6 py-3">
-          <nav>
-            <Link href="/services" className="text-sm font-medium underline-offset-4 hover:underline">
+          <nav className="flex items-center gap-4 text-sm font-medium">
+            <Link href="/services" className="underline-offset-4 hover:underline">
               Services
+            </Link>
+            <Link href="/endpoints" className="underline-offset-4 hover:underline">
+              Endpoints
             </Link>
           </nav>
         </header>
