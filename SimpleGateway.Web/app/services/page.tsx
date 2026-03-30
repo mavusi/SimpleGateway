@@ -199,15 +199,15 @@ export default function ServicesPage() {
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-6 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Services</h1>
-          <p className="text-sm text-slate-600">List and manage gateway services.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Services</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-300">List and manage gateway services.</p>
         </div>
         <button
           type="button"
           onClick={() => {
             resetForm();
           }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           New Service
         </button>
@@ -217,40 +217,40 @@ export default function ServicesPage() {
         <div className="mb-4 rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
       ) : null}
 
-      <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        <h2 className="mb-4 text-lg font-medium text-slate-900">{isEditMode ? "Edit Service" : "Create Service"}</h2>
+      <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-slate-700 dark:bg-slate-900">
+        <h2 className="mb-4 text-lg font-medium text-slate-900 dark:text-slate-100">{isEditMode ? "Edit Service" : "Create Service"}</h2>
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
           <input type="hidden" name="Id" value={resolvedId} readOnly />
 
-          <label className="space-y-1 text-sm text-slate-700">
+          <label className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
             <span>Name</span>
             <input
               required
               value={form.name}
               onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-              className="w-full rounded-md border border-slate-300 px-3 py-2"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               placeholder="Orders API"
             />
           </label>
 
-          <label className="space-y-1 text-sm text-slate-700">
+          <label className="space-y-1 text-sm text-slate-700 dark:text-slate-300">
             <span>Base URL</span>
             <input
               required
               value={form.url}
               onChange={(event) => setForm((current) => ({ ...current, url: event.target.value }))}
-              className="w-full rounded-md border border-slate-300 px-3 py-2"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               placeholder="https://service.local"
             />
           </label>
 
-          <label className="space-y-1 text-sm text-slate-700 sm:col-span-2">
+          <label className="space-y-1 text-sm text-slate-700 dark:text-slate-300 sm:col-span-2">
             <span>Path Prefix</span>
             <input
               required
               value={form.path}
               onChange={(event) => setForm((current) => ({ ...current, path: event.target.value }))}
-              className="w-full rounded-md border border-slate-300 px-3 py-2"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               placeholder="/orders"
             />
           </label>
@@ -259,7 +259,7 @@ export default function ServicesPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
             >
               {saving ? "Saving..." : isEditMode ? "Update Service" : "Create Service"}
             </button>
@@ -267,7 +267,7 @@ export default function ServicesPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 Cancel Edit
               </button>
@@ -276,19 +276,19 @@ export default function ServicesPage() {
         </form>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-4 py-3 sm:px-6">
-          <h2 className="text-lg font-medium text-slate-900">Services List</h2>
+      <section className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="border-b border-slate-200 px-4 py-3 sm:px-6 dark:border-slate-700">
+          <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100">Services List</h2>
         </div>
 
         {loading ? (
-          <p className="px-4 py-6 text-sm text-slate-600 sm:px-6">Loading services...</p>
+          <p className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300 sm:px-6">Loading services...</p>
         ) : services.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-slate-600 sm:px-6">No services found.</p>
+          <p className="px-4 py-6 text-sm text-slate-600 dark:text-slate-300 sm:px-6">No services found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-700">
+              <thead className="bg-slate-50 text-left text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                 <tr>
                   <th className="px-4 py-3 font-semibold sm:px-6">Name</th>
                   <th className="px-4 py-3 font-semibold sm:px-6">URL</th>
@@ -298,7 +298,7 @@ export default function ServicesPage() {
               </thead>
               <tbody>
                 {services.map((service) => (
-                  <tr key={service.id ?? `${service.name}-${service.path}`} className="border-t border-slate-200">
+                  <tr key={service.id ?? `${service.name}-${service.path}`} className="border-t border-slate-200 dark:border-slate-700">
                     <td className="px-4 py-3 sm:px-6">{service.name ?? "-"}</td>
                     <td className="px-4 py-3 sm:px-6">{service.url ?? "-"}</td>
                     <td className="px-4 py-3 sm:px-6">{service.path ?? "-"}</td>
@@ -307,7 +307,7 @@ export default function ServicesPage() {
                         <button
                           type="button"
                           onClick={() => handleEdit(service)}
-                          className="text-slate-700 hover:text-slate-900"
+                          className="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
                         >
                           Edit
                         </button>
@@ -315,7 +315,7 @@ export default function ServicesPage() {
                           <button
                             type="button"
                             onClick={() => void handleDelete(service.id as string)}
-                            className="text-rose-600 hover:text-rose-700"
+                            className="text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300"
                           >
                             Delete
                           </button>
