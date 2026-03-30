@@ -119,7 +119,7 @@ export default function EndpointsPage() {
   }, []);
 
   const resetForm = () => {
-    setForm((current) => ({
+    setForm(() => ({
       ...EMPTY_FORM,
       serviceId: services[0]?.id ?? "",
     }));
@@ -131,7 +131,7 @@ export default function EndpointsPage() {
     setError(null);
 
     const payload = {
-      id: form.id || undefined,
+      Id: form.id || undefined,
       serviceId: form.serviceId,
       method: form.method,
       path: form.path,
@@ -233,6 +233,8 @@ export default function EndpointsPage() {
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 text-lg font-medium text-slate-900">{isEditMode ? "Edit Endpoint" : "Create Endpoint"}</h2>
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
+          <input type="hidden" name="Id" value={form.id} readOnly />
+
           <label className="space-y-1 text-sm text-slate-700">
             <span>Service</span>
             <select

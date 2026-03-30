@@ -31,6 +31,14 @@ const EMPTY_FORM: ServiceFormState = {
   path: "",
 };
 
+function toServiceId(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function normalizeArray<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) {
     return payload as T[];
@@ -67,6 +75,7 @@ export default function ServicesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const isEditMode = useMemo(() => form.id.trim().length > 0, [form.id]);
+  const resolvedId = useMemo(() => (isEditMode ? form.id.trim() : toServiceId(form.name)), [form.id, form.name, isEditMode]);
 
   const fetchServices = async () => {
     setLoading(true);
@@ -101,8 +110,14 @@ export default function ServicesPage() {
     setSaving(true);
     setError(null);
 
+    if (!resolvedId) {
+      setError("Service name must produce a valid Id");
+      setSaving(false);
+      return;
+    }
+
     const payload = {
-      id: form.id || undefined,
+      Id: resolvedId,
       name: form.name,
       url: form.url,
       path: form.path,
@@ -205,6 +220,8 @@ export default function ServicesPage() {
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 text-lg font-medium text-slate-900">{isEditMode ? "Edit Service" : "Create Service"}</h2>
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit}>
+          <input type="hidden" name="Id" value={resolvedId} readOnly />
+
           <label className="space-y-1 text-sm text-slate-700">
             <span>Name</span>
             <input
