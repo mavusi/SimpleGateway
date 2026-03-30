@@ -48,7 +48,7 @@ namespace SimpleGateway.Api.Controllers
             _db.Services.Add(service);
             await _db.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetService), new { id = service.Id }, service);
+            return Ok(service);
         }
 
         [HttpPut("services/{id}")]
@@ -65,7 +65,7 @@ namespace SimpleGateway.Api.Controllers
             _db.Services.Update(svc);
             await _db.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(svc);
         }
 
         [HttpDelete("services/{id}")]
@@ -78,7 +78,7 @@ namespace SimpleGateway.Api.Controllers
             _db.Services.Remove(svc);
             await _db.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(svc);
         }
 
         // ----- Endpoints -----
@@ -113,7 +113,7 @@ namespace SimpleGateway.Api.Controllers
             _db.Endpoints.Add(endpoint);
             await _db.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetEndpoint), new { id = endpoint.Id }, endpoint);
+            return Ok(endpoint);
         }
 
         [HttpPut("endpoints/{id}")]
@@ -137,7 +137,7 @@ namespace SimpleGateway.Api.Controllers
             _db.Endpoints.Update(ep);
             await _db.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(ep);
         }
 
         [HttpDelete("endpoints/{id}")]
@@ -150,7 +150,7 @@ namespace SimpleGateway.Api.Controllers
             _db.Endpoints.Remove(ep);
             await _db.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(ep);
         }
     }
 }
