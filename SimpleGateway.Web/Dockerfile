@@ -13,7 +13,7 @@ FROM node:${NODE_VERSION} AS dependencies
 WORKDIR /app
 
 # Copy package-related files first to leverage Docker's caching mechanism
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+COPY SimpleGateway.Web/package.json SimpleGateway.Web/yarn.lock* SimpleGateway.Web/package-lock.json* SimpleGateway.Web/pnpm-lock.yaml* SimpleGateway.Web/.npmrc* ./
 
 # Install project dependencies with frozen lockfile for reproducible builds
 RUN --mount=type=cache,target=/root/.npm \
@@ -42,7 +42,7 @@ WORKDIR /app
 COPY --from=dependencies /app/node_modules ./node_modules
 
 # Copy application source code
-COPY . .
+COPY SimpleGateway.Web/ .
 
 ENV NODE_ENV=production
 
