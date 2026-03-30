@@ -18,16 +18,16 @@ services:
     ports:
       - "8001:80"
 
-  # web:
-  #   build:
-  #     context: .
-  #     dockerfile: SimpleGateway.Web/Dockerfile
-  #   environment:
-  #     ASPNETCORE_ENVIRONMENT: Docker
-  #     API_URL: http://api:8000
-  #     ADMIN_API_URL: http://adminapi:8001
-  #   ports:
-  #     - "8002:80"
-  #   depends_on:
-  #     - api
-  #     - adminapi
+  web:
+    build:
+      context: .
+      dockerfile: SimpleGateway.Web/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      API_URL: http://api:8000
+      ADMIN_API_URL: http://adminapi:8001
+    ports:
+      - "8002:80"
+    depends_on:
+      - api
+      - adminapi
