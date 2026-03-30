@@ -48,7 +48,8 @@ namespace SimpleGateway.AdminApi
 
             // Configure the HTTP request pipeline.
             app.MapOpenApi();
-            
+            app.MapScalarApiReference();
+
             // Redirect root to API docs
             app.MapGet("/", () => Results.Redirect("/scalar/v1")).ExcludeFromDescription();
 
