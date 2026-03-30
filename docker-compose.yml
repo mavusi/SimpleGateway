@@ -28,7 +28,7 @@ services:
       API_URL: http://api:8000
       ADMIN_API_URL: http://adminapi:8001
     ports:
-      - "8002:80"
+      - "8002:3000"
     depends_on:
       - api
       - adminapi
