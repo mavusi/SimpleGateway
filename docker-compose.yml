@@ -1,5 +1,6 @@
 services:
   api:
+    container_name: SimpleGateway.Api
     build:
       context: .
       dockerfile: SimpleGateway.Api/Dockerfile
@@ -9,6 +10,7 @@ services:
     ports:
       - "8000:80"
   adminapi:
+    container_name: SimpleGateway.AdminApi
     build:
       context: .
       dockerfile: SimpleGateway.AdminApi/Dockerfile
@@ -19,6 +21,7 @@ services:
       - "8001:80"
 
   web:
+    container_name: SimpleGateway.Web
     build:
       context: .
       dockerfile: SimpleGateway.Web/Dockerfile
