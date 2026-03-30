@@ -13,6 +13,7 @@ namespace SimpleGateway.AdminApi
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+            builder.Services.AddEndpointsApiExplorer();
 
             // Configure database
             var postgresConnection = builder.Configuration["POSTGRES_CONNECTION"] 
@@ -46,10 +47,11 @@ namespace SimpleGateway.AdminApi
             }
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
+            app.MapOpenApi();
+            app.MapScalarApiReference();
+
+            // Redirect root to API docs
+            app.MapGet("/", () => Results.Redirect("/scalar/v1")).ExcludeFromDescription();
 
             app.UseAuthorization();
 
