@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using SimpleGateway.DataAccess;
 
 namespace SimpleGateway.AdminApi
